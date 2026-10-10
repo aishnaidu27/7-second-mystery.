@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080a18">
+<title>The 7-Second Mystery</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #080a18;
+    --panel: rgba(18, 23, 49, .88);
+    --line: rgba(115, 132, 255, .28);
+    --cyan: #5cf5ff;
+    --pink: #ff4fd8;
+    --purple: #9d7bff;
+    --text: #f3f4ff;
+    --muted: #a7aecf;
+    --good: #76ffbd;
+    --bad: #ff718e;
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(80, 53, 190, .22), transparent 42%),
+      radial-gradient(ellipse at 95% 25%, rgba(0, 204, 229, .12), transparent 35%),
+      var(--bg);
+  }
+  button { font: inherit; cursor: pointer; touch-action: manipulation; }
+  button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+  .shell { width: min(100% - 28px, 920px); margin: 0 auto; padding: 22px 0 38px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .logo { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: var(--cyan); border: 1px solid var(--line); background: linear-gradient(145deg, #1c2450, #101328); box-shadow: 0 0 25px #5cf5ff12; font-size: 22px; }
+  .brand h1 { margin: 0; font-size: clamp(16px, 3.6vw, 22px); letter-spacing: .04em; }
+  .brand p { margin: 3px 0 0; font-size: 11px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+  .sound-toggle { border: 1px solid var(--line); color: var(--text); background: #11152b; border-radius: 12px; padding: 10px 12px; min-width: 46px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { background: rgba(17, 21, 44, .8); border: 1px solid var(--line); border-radius: 15px; padding: 12px 14px; }
+  .stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .15em; }
+  .stat .value { font-size: clamp(20px, 4vw, 27px); font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .stat .value.cyan { color: var(--cyan); }
+  .stat .value.pink { color: var(--pink); }
+  .game-card { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(18, 23, 49, .96), rgba(11, 14, 31, .97)); border: 1px solid var(--line); border-radius: 23px; padding: clamp(16px, 4vw, 30px); box-shadow: 0 18px 70px #0004, inset 0 1px #ffffff08; }
+  .game-card:before { content: ""; position: absolute; top: 0; left: 12%; right: 12%; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent); opacity: .65; }
+  .topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #0b1026; padding: 7px 10px; border-radius: 99px; color: var(--muted); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+  .timer-wrap { height: 5px; background: #272b49; border-radius: 99px; overflow: hidden; margin-bottom: 20px; }
+  .timer-bar { width: 100%; height: 100%; transform-origin: left; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink)); transition: width .08s linear; }
+  .scene { min-height: 235px; display: grid; place-items: center; position: relative; border-radius: 18px; overflow: hidden; background: radial-gradient(ellipse at center, #171e40 0%, #0b1026 68%, #090d1e 100%); border: 1px solid #9d7bff20; }
+  .scene:before { content: ""; position: absolute; inset: 0; opacity: .22; background-image: linear-gradient(#8c9aff18 1px, transparent 1px), linear-gradient(90deg, #8c9aff18 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent); }
+  .scene-inner { position: relative; width: 100%; text-align: center; padding: 24px 16px; }
+  .scene-icon { font-size: clamp(58px, 14vw, 90px); line-height: 1.15; filter: drop-shadow(0 0 18px #5cf5ff45); margin-bottom: 12px; }
+  .scene-title { font-size: clamp(20px, 4vw, 28px); font-weight: 800; letter-spacing: .03em; margin: 0; }
+  .scene-caption { color: var(--muted); margin: 9px 0 0; font-size: 13px; }
+  .scene-count { display: inline-block; margin-top: 14px; color: var(--cyan); font-size: 11px; text-transform: uppercase; letter-spacing: .2em; }
+  .prompt { text-align: center; padding: 21px 0 15px; }
+  .prompt .eyebrow { color: var(--pink); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; font-weight: 800; }
+  .prompt h2 { font-size: clamp(21px, 4.5vw, 29px); margin: 8px 0; }
+  .prompt p { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.55; }
+  .answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .answer { min-height: 55px; text-align: left; display: flex; align-items: center; gap: 10px; padding: 13px 14px; color: var(--text); background: #11162e; border: 1px solid #30385f; border-radius: 13px; transition: transform .15s, border-color .15s, background .15s; }
+  .answer:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--cyan); background: #17203b; }
+  .answer:disabled { cursor: default; opacity: .85; }
+  .key { display: grid; place-items: center; width: 27px; height: 27px; flex: 0 0 27px; border: 1px solid #454c76; border-radius: 8px; color: var(--cyan); font-size: 12px; font-weight: 800; }
+  .answer.correct { border-color: var(--good); background: #12352d; }
+  .answer.wrong { border-color: var(--bad); background: #381b30; }
+  .feedback { min-height: 28px; text-align: center; padding-top: 12px; font-weight: 700; font-size: 13px; }
+  .feedback.good { color: var(--good); } .feedback.bad { color: var(--bad); }
+  .actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding-top: 14px; }
+  .btn { border: 1px solid var(--line); background: #151a35; color: var(--text); border-radius: 13px; padding: 13px 19px; font-weight: 800; }
+  .btn.primary { color: #061018; border: 0; background: linear-gradient(100deg, var(--cyan), #9df8ff); box-shadow: 0 7px 24px #5cf5ff20; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .overlay { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(6, 8, 22, .91); backdrop-filter: blur(9px); }
+  .overlay-box { width: min(100%, 490px); text-align: center; padding: 22px 12px; }
+  .overlay-symbol { font-size: 58px; margin-bottom: 8px; filter: drop-shadow(0 0 20px #9d7bff55); }
+  .overlay h2 { margin: 8px 0; font-size: clamp(27px, 6vw, 40px); letter-spacing: -.03em; }
+  .overlay p { color: var(--muted); line-height: 1.65; font-size: 14px; }
+  .overlay .mini { color: var(--cyan); letter-spacing: .2em; font-size: 10px; text-transform: uppercase; font-weight: 800; }
+  .howto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 22px 0; text-align: left; }
+  .howto div { padding: 12px; background: #11162e; border: 1px solid var(--line); border-radius: 12px; }
+  .howto b { display: block; color: var(--cyan); font-size: 12px; margin-bottom: 5px; }
+  .howto span { display: block; color: var(--muted); font-size: 11px; line-height: 1.5; }
+  .hidden { display: none !important; }
+  footer { text-align: center; color: #6f779d; font-size: 11px; margin-top: 17px; line-height: 1.6; }
+  @media (max-width: 520px) {
+    .shell { width: min(100% - 18px, 920px); padding-top: 12px; }
+    header { margin-bottom: 13px; }
+    .stats { gap: 7px; }
+    .stat { padding: 10px; border-radius: 12px; }
+    .stat .label { font-size: 9px; letter-spacing: .1em; }
+    .game-card { border-radius: 18px; padding: 14px; }
+    .scene { min-height: 205px; }
+    .answers { gap: 8px; }
+    .answer { padding: 10px; font-size: 13px; gap: 7px; min-height: 54px; }
+    .key { width: 24px; height: 24px; flex-basis: 24px; }
+    .howto { gap: 6px; }
+    .howto div { padding: 9px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *:before, *:after { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">⌁</div>
+      <div><h1>THE 7-SECOND MYSTERY</h1><p>Observe. Remember. Solve.</p></div>
+    </div>
+    <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+  </header>
+
+  <section class="stats" aria-label="Game stats">
+    <div class="stat"><div class="label">Score</div><div class="value cyan" id="score">000</div></div>
+    <div class="stat"><div class="label">Level</div><div class="value" id="level">01</div></div>
+    <div class="stat"><div class="label">Best score</div><div class="value pink" id="best">000</div></div>
+  </section>
+
+  <main class="game-card">
+    <div class="topline">
+      <span class="pill"><span class="dot"></span><span id="phaseLabel">CASE FILE 001</span></span>
+      <span class="pill" id="timerLabel">⏱ 7.0 SEC</span>
+    </div>
+    <div class="timer-wrap" aria-hidden="true"><div class="timer-bar" id="timerBar"></div></div>
+
+    <section class="scene" id="scene" aria-live="polite">
+      <div class="scene-inner">
+        <div class="scene-icon" id="sceneIcon">🔎</div>
+        <h2 class="scene-title" id="sceneTitle">A case is waiting.</h2>
+        <p class="scene-caption" id="sceneCaption">Your eyes are your best clue.</p>
+        <div class="scene-count" id="sceneCount">READY WHEN YOU ARE</div>
+      </div>
+    </section>
+
+    <section class="prompt">
+      <div class="eyebrow" id="promptEyebrow">MEMORY CHECK</div>
+      <h2 id="question">What did you notice?</h2>
+      <p id="instruction">Study the scene carefully. Details won't stay forever.</p>
+    </section>
+
+    <div class="answers" id="answers">
+      <button class="answer" disabled><span class="key">A</span><span>Start a case to begin</span></button>
+      <button class="answer" disabled><span class="key">B</span><span>Watch closely</span></button>
+      <button class="answer" disabled><span class="key">C</span><span>Remember details</span></button>
+      <button class="answer" disabled><span class="key">D</span><span>Solve the mystery</span></button>
+    </div>
+    <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+    <div class="actions">
+      <button class="btn" id="skipBtn" disabled>Skip case ↗</button>
+      <button class="btn primary" id="mainBtn">Start investigation</button>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="overlay-box" id="startScreen">
+        <div class="overlay-symbol">🕵️</div>
+        <div class="mini">Your memory is the evidence</div>
+        <h2>Can you spot the truth?</h2>
+        <p>Each case gives you a scene to study. You have just <strong>7 seconds</strong> to memorize its details before the questions arrive. Every level gets trickier.</p>
+        <div class="howto">
+          <div><b>01 / OBSERVE</b><span>Study the scene and its details.</span></div>
+          <div><b>02 / REMEMBER</b><span>The scene vanishes. Trust your memory.</span></div>
+          <div><b>03 / SOLVE</b><span>Pick an answer to earn points.</span></div>
+        </div>
+        <button class="btn primary" id="startBtn">Open first case →</button>
+        <p style="font-size:11px;margin-top:15px">Sound is optional. Best score is saved on this device.</p>
+      </div>
+      <div class="overlay-box hidden" id="gameOverScreen">
+        <div class="overlay-symbol" id="overIcon">🗃️</div>
+        <div class="mini">Investigation report</div>
+        <h2 id="overTitle">Case closed.</h2>
+        <p id="overText">Your investigation is complete.</p>
+        <div class="howto">
+          <div><b>FINAL SCORE</b><span id="finalScore">0 points</span></div>
+          <div><b>CASES SOLVED</b><span id="finalSolved">0 cases</span></div>
+          <div><b>BEST SCORE</b><span id="finalBest">0 points</span></div>
+        </div>
+        <button class="btn primary" id="againBtn">Investigate again ↻</button>
+      </div>
+    </div>
+  </main>
+  <footer>Built for curious minds • Every case is a new clue<br>Tip: On mobile, tap an answer. On desktop, you can also use keys 1–4.</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const els = {
+    score: $("score"), level: $("level"), best: $("best"), phase: $("phaseLabel"),
+    timerLabel: $("timerLabel"), timerBar: $("timerBar"), scene: $("scene"),
+    icon: $("sceneIcon"), title: $("sceneTitle"), caption: $("sceneCaption"), count: $("sceneCount"),
+    eyebrow: $("promptEyebrow"), question: $("question"), instruction: $("instruction"),
+    answers: $("answers"), feedback: $("feedback"), skip: $("skipBtn"), main: $("mainBtn"),
+    overlay: $("overlay"), startScreen: $("startScreen"), overScreen: $("gameOverScreen"),
+    start: $("startBtn"), again: $("againBtn"), sound: $("soundToggle")
+  };
+
+  const cases = [
+    {icon:"🧪",title:"The Neon Lab",caption:"A quiet lab glows after midnight.",objects:["🧪","🔑","🕯️","📘"],question:"Which object was beside the candle?",options:["A key","A book","A potion","A clock"],correct:0},
+    {icon:"🚀",title:"The Lost Astronaut",caption:"A tiny ship drifts past a strange planet.",objects:["🌙","🪐","⭐","🛰️"],question:"Which object had rings?",options:["The moon","The satellite","The planet","The star"],correct:2},
+    {icon:"🕰️",title:"The Clockmaker's Room",caption:"Tick-tock… something feels out of place.",objects:["🕰️","🌹","🗝️","🎭"],question:"What color was the flower?",options:["Blue","Red","Yellow","Purple"],correct:1},
+    {icon:"🧁",title:"The Midnight Bakery",caption:"Four treats sit under a flickering light.",objects:["🧁","🍩","🍓","🍪"],question:"Which treat had a hole in the middle?",options:["Cupcake","Cookie","Doughnut","Strawberry"],correct:2},
+    {icon:"🗝️",title:"The Secret Library",caption:"One book contains a hidden message.",objects:["📕","📗","📘","📙"],question:"Which color was the third book?",options:["Red","Green","Blue","Orange"],correct:2},
+    {icon:"🐈",title:"The Phantom Cat",caption:"A mysterious cat crossed the moonlit hall.",objects:["🐈","🦋","🕸️","🪞"],question:"Which creature appeared with the cat?",options:["A bat","A butterfly","A spider","A raven"],correct:1},
+    {icon:"🏴‍☠️",title:"The Pirate's Map",caption:"A treasure map points to an unknown island.",objects:["💎","🧭","🦜","⚓"],question:"Which item helps you find direction?",options:["The gem","The parrot","The anchor","The compass"],correct:3},
+    {icon:"🪴",title:"The Glass Greenhouse",caption:"Something unusual is growing in the corner.",objects:["🌵","🌻","🍄","🌿"],question:"Which plant has sharp spikes?",options:["Sunflower","Cactus","Mushroom","Fern"],correct:1},
+    {icon:"🎭",title:"The Masked Ball",caption:"Everyone is hiding a secret tonight.",objects:["🎭","🎻","🥀","💌"],question:"Which object makes music?",options:["The mask","The letter","The violin","The rose"],correct:2},
+    {icon:"🌌",title:"The Final Signal",caption:"A signal flashes at the edge of space.",objects:["🛸","🌠","🪐","🔭"],question:"Which object is used to view distant stars?",options:["The UFO","The shooting star","The planet","The telescope"],correct:3}
+  ];
+
+  let score = 0, level = 1, solved = 0, caseIndex = 0, round = null;
+  let phase = "start", timer = null, deadline = 0, soundOn = true, audioCtx = null;
+  let best = readBest();
+
+  function readBest() {
+    try { return Number(localStorage.getItem("sevenSecondMysteryBest")) || 0; }
+    catch (_) { return 0; }
+  }
+  function saveBest() {
+    try { localStorage.setItem("sevenSecondMysteryBest", String(best)); } catch (_) {}
+  }
+  function updateStats() {
+    els.score.textContent = String(score).padStart(3, "0");
+    els.level.textContent = String(level).padStart(2, "0");
+    els.best.textContent = String(best).padStart(3, "0");
+  }
+  function beep(freq = 440, duration = .09, type = "sine", volume = .045) {
+    if (!soundOn) return;
+    try {
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + duration);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch (_) {}
+  }
+  function clearClock() { if (timer) clearInterval(timer); timer = null; }
+  function setPhase(p) {
+    phase = p;
+    els.phase.textContent = p === "observe" ? "OBSERVE THE SCENE" : p === "answer" ? "MEMORY CHECK" : p === "feedback" ? "CASE REVIEW" : "CASE FILE " + String(caseIndex + 1).padStart(3, "0");
+  }
+  function setFeedback(text = "", kind = "") {
+    els.feedback.textContent = text;
+    els.feedback.className = "feedback" + (kind ? " " + kind : "");
+  }
+  function makeButtons(options, enabled) {
+    els.answers.replaceChildren();
+    options.forEach((label, i) => {
+      const btn = document.createElement("button");
+      btn.className = "answer";
+      btn.disabled = !enabled;
+      btn.dataset.index = String(i);
+      const key = document.createElement("span"); key.className = "key"; key.textContent = ["1","2","3","4"][i];
+      const text = document.createElement("span"); text.textContent = label;
+      btn.append(key, text);
+      btn.addEventListener("click", () => answer(i));
+      els.answers.append(btn);
+    });
+  }
+  function shuffleOptions(item) {
+    const correctText = item.options[item.correct];
+    const shuffled = item.options.map((text, index) => ({text, index})).sort(() => Math.random() - .5);
+    return {options: shuffled.map(x => x.text), correct: shuffled.findIndex(x => x.text === correctText)};
+  }
+  function getCase() {
+    const base = cases[caseIndex % cases.length];
+    const shuffled = shuffleOptions(base);
+    const harder = level >= 3;
+    return {...base, options: shuffled.options, correct: shuffled.correct, displayObjects: base.objects.slice(), seconds: Math.max(3.5, 7 - Math.floor((level - 1) / 2) * .7), harder};
+  }
+  function beginGame() {
+    clearClock(); score = 0; level = 1; solved = 0; caseIndex = 0;
+    updateStats(); hideOverlay(); startCase();
+  }
+  function hideOverlay() { els.overlay.classList.add("hidden"); els.startScreen.classList.add("hidden"); els.overScreen.classList.add("hidden"); }
+  function showStart() { clearClock(); phase = "start"; els.overlay.classList.remove("hidden"); els.startScreen.classList.remove("hidden"); els.overScreen.classList.add("hidden"); }
+  function startCase() {
+    clearClock(); round = getCase(); setPhase("observe"); setFeedback("");
+    els.skip.disabled = false; els.main.classList.add("hidden");
+    els.eyebrow.textContent = "MEMORIZE THE DETAILS";
+    els.question.textContent = "Study the scene…";
+    els.instruction.textContent = "Remember the objects and their details before time runs out.";
+    els.icon.textContent = round.icon;
+    els.title.textContent = round.title;
+    els.caption.textContent = round.caption;
+    els.count.textContent = "LOOK CLOSELY";
+    els.timerLabel.textContent = "⏱ " + round.seconds.toFixed(1) + " SEC";
+    els.timerBar.style.width = "100%";
+    // Show a small visual arrangement of all scene clues.
+    els.icon.textContent = round.displayObjects.join("   ");
+    els.icon.style.fontSize = round.displayObjects.length > 3 ? "clamp(34px, 9vw, 58px)" : "clamp(48px, 12vw, 76px)";
+    els.scene.style.borderColor = "#5cf5ff35";
+    makeButtons(["Look at the scene","Remember the clues","Watch the timer","Get ready"], false);
+    deadline = performance.now() + round.seconds * 1000;
+    timer = setInterval(tickObserve, 50);
+    beep(540, .08);
+  }
+  function tickObserve() {
+    const remaining = Math.max(0, (deadline - performance.now()) / 1000);
+    els.timerLabel.textContent = "⏱ " + remaining.toFixed(1) + " SEC";
+    els.timerBar.style.width = (remaining / round.seconds * 100) + "%";
+    if (remaining <= 0) showQuestion();
+  }
+  function showQuestion() {
+    clearClock(); setPhase("answer");
+    els.timerLabel.textContent = "🔎 YOUR TURN";
+    els.timerBar.style.width = "0%";
+    els.icon.textContent = "❔"; els.icon.style.fontSize = "clamp(58px, 14vw, 90px)";
+    els.title.textContent = "Scene archived";
+    els.caption.textContent = "The evidence has disappeared.";
+    els.count.textContent = "MEMORY IS EVERYTHING";
+    els.eyebrow.textContent = "CASE QUESTION";
+    els.question.textContent = round.question;
+    els.instruction.textContent = level >= 3 ? "Think carefully. The cases are getting trickier." : "Choose the best answer.";
+    makeButtons(round.options, true);
+    els.skip.disabled = false;
+    setFeedback("");
+    beep(740, .1);
+  }
+  function answer(index) {
+    if (phase !== "answer" || !round) return;
+    clearClock(); setPhase("feedback");
+    const buttons = [...els.answers.querySelectorAll("button")];
+    buttons.forEach((b, i) => { b.disabled = true; if (i === round.correct) b.classList.add("correct"); if (i === index && i !== round.correct) b.classList.add("wrong"); });
+    els.skip.disabled = true;
+    if (index === round.correct) {
+      const points = 100 + (level - 1) * 25;
+      score += points; solved++;
+      if (score > best) { best = score; saveBest(); }
+      updateStats(); setFeedback("Correct! +" + points + " points. Great observation.", "good");
+      beep(620, .09); setTimeout(() => beep(880, .13), 90);
+    } else {
+      setFeedback("Not quite. The answer was: " + round.options[round.correct] + ".", "bad");
+      beep(170, .22, "sawtooth", .035);
+    }
+    els.timerLabel.textContent = index === round.correct ? "✓ SOLVED" : "✕ MISSED";
+    els.timerBar.style.width = "0%";
+    els.eyebrow.textContent = "CASE REVIEW";
+    els.question.textContent = index === round.correct ? "Clue recovered!" : "The clue slipped away.";
+    els.instruction.textContent = "Ready for the next case? Each new level raises the challenge.";
+    els.main.textContent = "Next case →";
+    els.main.classList.remove("hidden");
+    els.main.onclick = nextCase;
+  }
+  function nextCase() {
+    if (phase !== "feedback") return;
+    caseIndex++;
+    if (caseIndex % 3 === 0) level++;
+    updateStats();
+    if (caseIndex >= 15) { endGame(); return; }
+    startCase();
+  }
+  function skipCase() {
+    if (phase !== "observe" && phase !== "answer") return;
+    clearClock();
+    setPhase("feedback"); els.skip.disabled = true;
+    setFeedback("Case skipped. No points this time.", "bad");
+    els.icon.textContent = "⏭️"; els.icon.style.fontSize = "clamp(58px, 14vw, 90px)";
+    els.title.textContent = "Moving on";
+    els.caption.textContent = "Every clue is a chance to learn.";
+    els.count.textContent = "NEXT CASE AWAITS";
+    els.question.textContent = "Skip this mystery?";
+    els.instruction.textContent = "No points awarded for this case.";
+    makeButtons(["Case skipped","","",""], false);
+    els.main.textContent = "Next case →"; els.main.classList.remove("hidden"); els.main.onclick = nextCase;
+    beep(280, .1);
+  }
+  function endGame() {
+    clearClock(); phase = "over";
+    els.overlay.classList.remove("hidden"); els.startScreen.classList.add("hidden"); els.overScreen.classList.remove("hidden");
+    $("overIcon").textContent = score >= 500 ? "🏆" : "🗃️";
+    $("overTitle").textContent = score >= 500 ? "Master detective!" : "Case files closed.";
+    $("overText").textContent = score >= 500 ? "Sharp eyes! You uncovered a remarkable number of clues." : "Every great detective gets better with practice. Ready for another investigation?";
+    $("finalScore").textContent = score + " points";
+    $("finalSolved").textContent = solved + " cases";
+    $("finalBest").textContent = best + " points";
+    els.main.classList.add("hidden"); els.skip.disabled = true;
+    beep(520, .12); setTimeout(() => beep(680, .15), 130);
+  }
+  els.start.addEventListener("click", beginGame);
+  els.again.addEventListener("click", beginGame);
+  els.main.addEventListener("click", () => { if (phase === "start") beginGame(); });
+  els.skip.addEventListener("click", skipCase);
+  els.sound.addEventListener("click", () => {
+    soundOn = !soundOn; els.sound.textContent = soundOn ? "🔊" : "🔇";
+    els.sound.setAttribute("aria-label", soundOn ? "Mute sound" : "Enable sound");
+    if (soundOn) beep(660, .08);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (phase === "answer" && ["1","2","3","4"].includes(event.key)) answer(Number(event.key) - 1);
+    if ((phase === "start" || phase === "over") && event.key === "Enter") beginGame();
+  });
+  updateStats();
+  showStart();
+})();
+</script>
+</body>
+</html>
